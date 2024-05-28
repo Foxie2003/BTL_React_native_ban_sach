@@ -28,10 +28,10 @@ const BookDetailScreen = ({ route, navigation }) => {
       }
 
       await AsyncStorage.setItem('cart', JSON.stringify(cartItems));
-      Alert.alert('Success', 'Added to cart successfully!');
+      Alert.alert('Success', 'Thêm sản phẩm vào giỏ hàng thành công!');
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Could not add to cart.');
+      Alert.alert('Error', 'Không thể thêm sản phẩm vào giỏ hàng.');
     }
   };
 
@@ -39,14 +39,14 @@ const BookDetailScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       <View style={styles.navBar}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={30} color="white" />
+          <Icon name="arrow-back" size={35} color="white" />
         </TouchableOpacity>
         <View style={styles.navIcons}>
           <TouchableOpacity style={{ paddingHorizontal: 10 }} onPress={() => navigation.navigate('Cart')}>
-            <Icon name="cart-outline" size={30} color="white" />
+            <Icon name="cart-outline" size={35} color="white" />
           </TouchableOpacity>
           <TouchableOpacity>
-            <Icon name="ellipsis-horizontal-outline" size={30} color="white" />
+            <Icon name="ellipsis-horizontal-outline" size={35} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 10,
+    padding: 20,
     backgroundColor: '#C92127',
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
@@ -242,13 +242,15 @@ const styles = StyleSheet.create({
   },
   quantityButton: {
     width: '10%',
+    alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#C92127',
-    padding: 5,
+    padding: 10,
     borderRadius: 5,
   },
   quantity: {
     width: '10%',
+    color: '#000',
     fontSize: 18,
     textAlign: 'center',
     fontWeight: 'bold',
@@ -259,7 +261,7 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     backgroundColor: '#C92127',
-    padding: 5,
+    padding: 15,
     marginHorizontal: 10,
     borderRadius: 5,
   },
@@ -273,7 +275,7 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     backgroundColor: '#FF8C00',
-    padding: 5,
+    padding: 15,
     borderRadius: 5,
   },
   buyButtonText: {
