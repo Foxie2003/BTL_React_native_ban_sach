@@ -23,6 +23,7 @@ function HomeStackNavigator() {
       }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="BookDetail" component={BookDetailScreen} />
+      <Stack.Screen name="Cart" component={CartScreen} />
     </Stack.Navigator>
   );
 }
@@ -37,13 +38,17 @@ function TabNavigator() {
           if (routeName === 'BookDetail') {
             return { display: "none" };
           }
-          return {};
+          return {
+            height: '6%',
+            paddingVertical: '1%'
+          };
         })(route),
       })}>
       <Tab.Screen 
-        name="Home" 
+        name="HomeStackNavigator" 
         component={HomeStackNavigator} 
         options={{
+          title: 'Trang chủ',
           tabBarIcon: ({ color, size }) => (
             <Icon name="home-outline" color={color} size={size} />
           ),
@@ -59,9 +64,10 @@ function TabNavigator() {
         }}
       />
       <Tab.Screen 
-        name="Tìm kiếm" 
+        name="Tìm kiếm"
         component={CartScreen} 
         options={{
+          title: 'Tìm kiếm',
           tabBarIcon: ({ color, size }) => (
             <Icon name="search-outline" color={color} size={size} />
           ),

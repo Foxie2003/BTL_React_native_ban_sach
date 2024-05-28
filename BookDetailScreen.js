@@ -20,7 +20,7 @@ const BookDetailScreen = ({ route, navigation }) => {
       const cart = await AsyncStorage.getItem('cart');
       const cartItems = cart ? JSON.parse(cart) : [];
 
-      const itemIndex = cartItems.findIndex(item => item.id === book.id);
+      const itemIndex = cartItems.findIndex(item => item.BookID === book.BookID);
       if (itemIndex >= 0) {
         cartItems[itemIndex].quantity += quantity;
       } else {
