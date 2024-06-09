@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#555',
   },
-  bottomNav: {
+  bottomNav: {       
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
