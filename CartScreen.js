@@ -1,21 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { APIsURL, ImagesURL, formatPrice } from './Constants';
+import { APIsURL, ImagesURL, formatPrice, UserId } from './Constants';
+import auth from '@react-native-firebase/auth';
+import { useFocusEffect } from '@react-navigation/native';
 
 const CartScreen = ({ navigation }) => {
   const [cartItems, setCartItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-
-  useEffect(() => {
-    fetchCartItems();
-  }, []);
-
-  useEffect(() => {
-    setSelectAll(cartItems.length > 0 && selectedItems.length === cartItems.length);
-  }, [selectedItems, cartItems]);
 
   const fetchCartItems = async () => {
     try {
@@ -27,16 +21,30 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
+  useEffect(() => {
+    fetchCartItems();
+  }, []);
+
+  useEffect(() => {
+    setSelectAll(cartItems.length > 0 && selectedItems.length === cartItems.length);
+  }, [selectedItems, cartItems]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCartItems();
+    }, [])
+  );
+
   const removeFromCart = async (itemToRemove) => {
-    const updatedCartItems = cartItems.filter(item => item.BookID !== itemToRemove.BookID);
+    const updatedCartItems = cartItems.filter(item => item.id !== itemToRemove.id);
     setCartItems(updatedCartItems);
     await AsyncStorage.setItem('cart', JSON.stringify(updatedCartItems));
-    setSelectedItems(updatedCartItems.filter(item => selectedItems.includes(item.BookID)));
+    setSelectedItems(updatedCartItems.filter(item => selectedItems.includes(item.id)));
   };
 
   const increaseQuantity = async (itemToUpdate) => {
     const updatedCartItems = cartItems.map(item =>
-      item.BookID === itemToUpdate.BookID ? { ...item, quantity: item.quantity + 1 } : item
+      item.id === itemToUpdate.id ? { ...item, quantity: item.quantity + 1 } : item
     );
     setCartItems(updatedCartItems);
     await AsyncStorage.setItem('cart', JSON.stringify(updatedCartItems));
@@ -45,7 +53,7 @@ const CartScreen = ({ navigation }) => {
   const decreaseQuantity = async (itemToUpdate) => {
     if (itemToUpdate.quantity > 1) {
       const updatedCartItems = cartItems.map(item =>
-        item.BookID === itemToUpdate.BookID ? { ...item, quantity: item.quantity - 1 } : item
+        item.id === itemToUpdate.id ? { ...item, quantity: item.quantity - 1 } : item
       );
       setCartItems(updatedCartItems);
       await AsyncStorage.setItem('cart', JSON.stringify(updatedCartItems));
@@ -53,10 +61,10 @@ const CartScreen = ({ navigation }) => {
   };
 
   const toggleSelectItem = (item) => {
-    if (selectedItems.includes(item.BookID)) {
-      setSelectedItems(selectedItems.filter(id => id !== item.BookID));
+    if (selectedItems.includes(item.id)) {
+      setSelectedItems(selectedItems.filter(id => id !== item.id));
     } else {
-      setSelectedItems([...selectedItems, item.BookID]);
+      setSelectedItems([...selectedItems, item.id]);
     }
   };
 
@@ -64,74 +72,57 @@ const CartScreen = ({ navigation }) => {
     if (selectAll) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(cartItems.map(item => item.BookID));
+      setSelectedItems(cartItems.map(item => item.id));
     }
     setSelectAll(!selectAll);
   };
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
-      if (selectedItems.includes(item.BookID)) {
-        return total + item.Price * item.quantity;
+      if (selectedItems.includes(item.id)) {
+        return total + item.gia * item.quantity;
       }
       return total;
     }, 0);
   };
 
   const handleCheckout = async () => {
-    const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.BookID));
+    const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
     const total = calculateTotal();
-    const userID = 1; // Thay đổi ID người dùng theo thực tế
+    var userID = ""; // Thay đổi ID người dùng theo thực tế
+    const unsubscribe = auth().onAuthStateChanged(user => {
+      if (user) {
+        userID = user.uid;
+      }});
     const status = 'Pending'; // Thay đổi trạng thái đơn hàng theo thực tế
-
     const cartItemsForAPI = selectedCartItems.map(item => ({
-        BookID: item.BookID,
-        quantity: item.quantity,
-        Price: item.Price
+      id: item.id,
+      quantity: item.quantity,
+      price: item.gia,
+      image: item.anh_dai_dien,
+      name: item.ten_sp
     }));
-
-    try {
-        const response = await fetch(`${APIsURL}/api/checkout`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                userID,
-                total,
-                status,
-                cartItems: cartItemsForAPI
-            }),
-        });
-
-        if (response.ok) {
-            Alert.alert('Success', 'Checkout successful');
-            const remainingItems = cartItems.filter(item => !selectedItems.includes(item.BookID));
-            setCartItems(remainingItems);
-            setSelectedItems([]);
-            await AsyncStorage.setItem('cart', JSON.stringify(remainingItems));
-        } else {
-            Alert.alert('Error', 'Checkout failed');
-        }
-    } catch (error) {
-        console.error(error);
-        Alert.alert('Error', 'Something went wrong');
-    }
+    navigation.navigate('ThanhToan', {
+      userID,
+      total,
+      status,
+      cartItems: cartItemsForAPI
+    });
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.cartItem}>
       <TouchableOpacity onPress={() => toggleSelectItem(item)}>
         <Icon
-          name={selectedItems.includes(item.BookID) ? "checkbox-outline" : "square-outline"}
+          name={selectedItems.includes(item.id) ? "checkbox-outline" : "square-outline"}
           size={25}
           color="#C92127"
         />
       </TouchableOpacity>
-      <Image source={{ uri: ImagesURL + "/" + item.CoverImageURL }} style={styles.cartItemImage} />
+      <Image source={{ uri: ImagesURL + "/" + item.anh_dai_dien }} style={styles.cartItemImage} />
       <View style={styles.cartItemDetails}>
-        <Text style={styles.cartItemTitle}>{item.Title}</Text>
-        <Text style={styles.cartItemPrice}>{formatPrice(item.Price)}</Text>
+        <Text style={styles.cartItemTitle}>{item.ten_sp}</Text>
+        <Text style={styles.cartItemPrice}>{formatPrice(item.gia)}</Text>
         <View style={styles.quantityContainer}>
           <TouchableOpacity onPress={() => decreaseQuantity(item)}>
             <Icon name="remove-circle-outline" size={25} color="#C92127" />
@@ -191,7 +182,7 @@ const CartScreen = ({ navigation }) => {
       <FlatList
         data={cartItems}
         renderItem={renderItem}
-        keyExtractor={item => item.BookID.toString()}
+        keyExtractor={item => item.id.toString()}
         ListFooterComponent={renderFooter}
         contentContainerStyle={styles.flatListContent}
       />

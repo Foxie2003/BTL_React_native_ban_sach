@@ -8,8 +8,9 @@ import { APIsURL, ImagesURL, formatPrice } from './Constants';
 const HomeScreen = () => {
     const navigation = useNavigation();
     const [books, setBooks] = useState([]);
-    const [pageNum, setPageNum] = useState(1);
+    const [pageNumber, setpageNumber] = useState(1);
     const [pageSize] = useState(10);
+    const [sx] = useState(0);
     const [maxPage, setMaxPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [bannerIndex, setBannerIndex] = useState(0);
@@ -41,40 +42,40 @@ const HomeScreen = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await axios.get(`${APIsURL}/api/categories`);
+            const response = await axios.get(`${APIsURL}/categories`);
             setCategories(response.data.categories);
             response.data.categories.forEach(category => {
-                fetchBooksByCategory(category.CategoryID, 1);
+                fetchBooksByCategory(category.MaLoai, 1);
             });
         } catch (error) {
             console.error("fetchCategories: " + error);
         }
     };
 
-    const fetchBooksByCategory = async (categoryID, pageNum) => {
+    const fetchBooksByCategory = async (categoryID, pageNumber) => {
         try {
-            const response = await axios.get(`${APIsURL}/api/books/category`, {
+            const response = await axios.get(`${APIsURL}/sanphams/loai/${categoryID}`, {
                 params: {
-                    categoryID,
-                    pageNum,
-                    pageSize
+                    pageNumber,
+                    pageSize,
+                    sx
                 }
             });
 
-            setBooksByCategory(prevBooksByCategory => {
-                const updatedCategoryBooks = pageNum === 1 
-                    ? response.data.books 
-                    : [...(prevBooksByCategory[categoryID]?.books || []), ...response.data.books];
-                
-                return {
-                    ...prevBooksByCategory,
-                    [categoryID]: {
-                        books: updatedCategoryBooks,
-                        pageNum,
-                        maxPage: response.data.maxPage
-                    }
-                };
-            });
+            if(categoryID != 0) {
+                setBooksByCategory(prevBooksByCategory => {
+                    const updatedCategoryBooks = pageNumber === 1 
+                        ? response.data
+                        : [...(prevBooksByCategory[categoryID] || []), ...response.data];
+                    
+                    return {
+                        ...prevBooksByCategory,
+                        [categoryID]: {
+                            books: updatedCategoryBooks
+                        }
+                    };
+                });
+            }
         } catch (error) {
             console.error(error);
         }
@@ -82,35 +83,35 @@ const HomeScreen = () => {
 
     const handleLoadMoreBooks = (categoryID) => {
         const categoryBooks = booksByCategory[categoryID];
-        if (categoryBooks.pageNum < categoryBooks.maxPage) {
-            fetchBooksByCategory(categoryID, categoryBooks.pageNum + 1);
+        if (categoryBooks.pageNumber < categoryBooks.maxPage) {
+            fetchBooksByCategory(categoryID, categoryBooks.pageNumber + 1);
         }
     };
 
     const renderCategory = (category) => {
-        const categoryBooks = booksByCategory[category.CategoryID]?.books || [];
+        const categoryBooks = booksByCategory[category.MaLoai]?.books || [];
         if(categoryBooks.length != 0) {
             return (
-                <View style={{ marginTop: 10 }} key={category.CategoryID}>
+                <View style={{ marginTop: 10 }} key={category.MaLoai}>
                     <View style={styles.categoryContainer}>
-                        <Text style={styles.categoryTitle}>{category.CategoryName}</Text>
+                        <Text style={styles.categoryTitle}>{category.TenLoai}</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             {categoryBooks.map((item) => (
-                                <TouchableOpacity key={item.BookID} style={styles.bookItem} onPress={() => navigation.navigate('BookDetailStackNavigator', { screen: 'BookDetail', params: {book: item}})}>
-                                    <Image source={{ uri: ImagesURL + "/" + item.CoverImageURL }} style={styles.bookImage} />
-                                    <Text style={styles.bookTitle} numberOfLines={2} ellipsizeMode="tail">{item.Title}</Text>
+                                <TouchableOpacity key={item.id} style={styles.bookItem} onPress={() => navigation.navigate('BookDetailStackNavigator', { screen: 'BookDetail', params: {book: item}})}>
+                                    <Image source={{ uri: ImagesURL + "/" + item.anh_dai_dien }} style={styles.bookImage} />
+                                    <Text style={styles.bookTitle} numberOfLines={2} ellipsizeMode="tail">{item.ten_sp}</Text>
                                     <View style={styles.priceContainer}>
-                                        <Text style={styles.bookDiscountPrice}>{formatPrice(item.Price - (item.Price * item.Discount / 100))}</Text>
+                                        <Text style={styles.bookDiscountPrice}>{formatPrice(item.gia_ban != null ? item.gia_ban : item.gia)}</Text>
                                         <View style={styles.bookDiscountContainer}>
-                                            <Text style={styles.bookDiscount}>-{item.Discount}%</Text>
+                                            <Text style={styles.bookDiscount}>-{Math.round(((item.gia - item.gia_ban) / item.gia) * 100)}%</Text>
                                         </View>
                                     </View>
-                                    <Text style={styles.bookPrice}>{formatPrice(item.Price)}</Text>
+                                    <Text style={styles.bookPrice}>{formatPrice(item.gia)}</Text>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
                     </View>
-                    {booksByCategory[category.CategoryID] && booksByCategory[category.CategoryID].pageNum < booksByCategory[category.CategoryID].maxPage && (
+                    {booksByCategory[category.CategoryID] && booksByCategory[category.CategoryID].pageNumber < booksByCategory[category.CategoryID].maxPage && (
                         <View style={[styles.container, { alignItems: 'center', padding: 10 }]}>
                             <TouchableOpacity style={styles.loadMoreButton} onPress={() => handleLoadMoreBooks(category.CategoryID)}>
                                 <Text style={styles.loadMoreText}>Xem thêm</Text>

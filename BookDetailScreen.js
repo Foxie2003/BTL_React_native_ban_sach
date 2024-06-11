@@ -20,7 +20,7 @@ const BookDetailScreen = ({ route, navigation }) => {
       const cart = await AsyncStorage.getItem('cart');
       const cartItems = cart ? JSON.parse(cart) : [];
 
-      const itemIndex = cartItems.findIndex(item => item.BookID === book.BookID);
+      const itemIndex = cartItems.findIndex(item => item.id === book.id);
       if (itemIndex >= 0) {
         cartItems[itemIndex].quantity += quantity;
       } else {
@@ -51,22 +51,22 @@ const BookDetailScreen = ({ route, navigation }) => {
         </View>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Image source={{ uri: ImagesURL + "/" + book.CoverImageURL }} style={styles.bookImage} />
+        <Image source={{ uri: ImagesURL + "/" + book.anh_dai_dien }} style={styles.bookImage} />
         <View style={{padding: 10, backgroundColor: '#fff'}}>
-          <Text style={styles.bookTitle}>{book.Title}</Text>
+          <Text style={styles.bookTitle}>{book.ten_sp}</Text>
           <View style={styles.priceContainer}>
-              <Text style={styles.bookDiscountPrice}>{formatPrice(book.Price - (book.Price * book.Discount / 100))}</Text>
+              <Text style={styles.bookDiscountPrice}>{formatPrice(book.gia_ban != null ? book.gia_ban : book.gia)}</Text>
               <View style={styles.bookDiscountContainer}>
-                  <Text style={styles.bookDiscount}>-{book.Discount}%</Text>
+                  <Text style={styles.bookDiscount}>-{Math.round(((book.gia - book.gia_ban) / book.gia) * 100)}%</Text>
               </View>
-              <Text style={styles.bookPrice}>{formatPrice(book.Price)}</Text>
+              <Text style={styles.bookPrice}>{formatPrice(book.gia)}</Text>
           </View>
         </View>
         {/* Phần thông tin sản phẩm bắt đầu ở đây */}
         <View style={styles.productInfoContainer}>
           <Text style={styles.productInfoTitle}>THÔNG TIN SẢN PHẨM</Text>
           <View style={{paddingHorizontal: 10}}>
-            <View style={styles.productInfoRow}>
+            {/* <View style={styles.productInfoRow}>
               <Text style={styles.productInfoLabel}>Tác giả</Text>
               <Text style={styles.productInfoValue}>{book.Author}</Text>
             </View>
@@ -85,13 +85,13 @@ const BookDetailScreen = ({ route, navigation }) => {
             <View style={styles.productInfoRow}>
               <Text style={styles.productInfoLabel}>Năm xuất bản</Text>
               <Text style={styles.productInfoValue}>{book.PublishedDate}</Text>
-            </View>
+            </View> */}
             <View style={styles.productInfoRow}>
               <Text style={styles.productInfoLabel}>Kho</Text>
-              <Text style={styles.productInfoValue}>{book.Stock}</Text>
+              <Text style={styles.productInfoValue}>{book.soluong}</Text>
             </View>
-            <Text style={styles.productTitleDescription}>{book.Title}</Text>
-            <Text style={styles.productDescription}>{book.Description}</Text>
+            <Text style={styles.productTitleDescription}>{book.ten_sp}</Text>
+            <Text style={styles.productDescription}>{book.mo_ta}</Text>
           </View>
         </View>
         {/* Kết thúc phần thông tin sản phẩm */}
